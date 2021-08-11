@@ -25,13 +25,17 @@ def ping():
             "version": "1.0",
             "parameters":
             [
-                {"name": "Poblacion",
+                {"id": 1,
+                 "name": "Poblacion",
                  "defaultValue": 100},
-                {"name": "Generaciones",
+                {"id": 2,
+                "name": "Generaciones",
                  "defaultValue": 50},
-                {"name": "Probabilidad de mutacion",
+                {"id": 3,
+                 "name": "Probabilidad de mutacion",
                  "defaultValue": 0.2},
-                {"name": "Ratio de Cruce",
+                {"id": 4,
+                 "name": "Ratio de Cruce",
                  "defaultValue": 0.8}
             ]
         },
@@ -41,15 +45,20 @@ def ping():
             "version": "1.0",
             "parameters":
             [
-                {"name": "Poblacion",
+                {"id": 1,
+                 "name": "Poblacion",
                  "defaultValue": 100},
-                {"name": "Generaciones",
+                {"id": 2,
+                 "name": "Generaciones",
                  "defaultValue": 70},
-                {"name": "Probabilidad de mutacion",
+                {"id": 3,
+                 "name": "Probabilidad de mutacion",
                  "defaultValue": 0.4},
-                {"name": "Ratio de Cruce",
+                {"id": 4,
+                 "name": "Ratio de Cruce",
                  "defaultValue": 0.8},
-                {"name": "Ratio de deterioro",
+                {"id": 5,
+                 "name": "Ratio de deterioro",
                  "defaultValue": 2}
             ]
         }
@@ -70,13 +79,17 @@ def get_route():
             "version": "1.0",
             "parameters":
             [
-                {"name": "Poblacion",
+                {"id": 1,
+                 "name": "Poblacion",
                  "defaultValue": 100},
-                {"name": "Generaciones",
+                {"id": 2,
+                "name": "Generaciones",
                  "defaultValue": 50},
-                {"name": "Probabilidad de mutacion",
+                {"id": 3,
+                 "name": "Probabilidad de mutacion",
                  "defaultValue": 0.2},
-                {"name": "Ratio de Cruce",
+                {"id": 4,
+                 "name": "Ratio de Cruce",
                  "defaultValue": 0.8}
             ]
         },
@@ -86,15 +99,20 @@ def get_route():
             "version": "1.0",
             "parameters":
             [
-                {"name": "Poblacion",
+                {"id": 1,
+                 "name": "Poblacion",
                  "defaultValue": 100},
-                {"name": "Generaciones",
+                {"id": 2,
+                 "name": "Generaciones",
                  "defaultValue": 70},
-                {"name": "Probabilidad de mutacion",
+                {"id": 3,
+                 "name": "Probabilidad de mutacion",
                  "defaultValue": 0.4},
-                {"name": "Ratio de Cruce",
+                {"id": 4,
+                 "name": "Ratio de Cruce",
                  "defaultValue": 0.8},
-                {"name": "Ratio de deterioro",
+                {"id": 5,
+                 "name": "Ratio de deterioro",
                  "defaultValue": 2}
             ]
         }
