@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  flask:
+    build: .
+    ports:
+      - "8000:80"
+    volumes:
+      - "./:/app"
+    restart: on-failure
+    networks:
+      - default
+      - redmine
+  mongo:
+    image: "bitnami/mongodb:4.2" 
+    environment:
+      - MONGODB_USERNAME=api_user
+      - MONGODB_PASSWORD=password123
+      - MONGODB_DATABASE=api
+    volumes:
+      - mongo-data:/bitnami/mongodb
+    restart: on-failure
+    networks:
+      - default
+
+networks:
+  redmine:
+    external: true
+    name: dss-pnrp-redmine-plugin_default
+
+volumes:
+  mongo-data:
+  mongo-configdb:
+
