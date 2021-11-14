@@ -4,9 +4,9 @@ app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb://api_user:password123@mongo:27017/api"
 mongo = PyMongo(app)
 
-@app.route("/")
-def hello_world():
-    return "<p>API is UP.</p>"
+@app.route("/health")
+def health():
+    return "<p>OK</p>"
 
 @app.route('/execution', methods=['POST'])
 def post_execution():
@@ -15,70 +15,108 @@ def post_execution():
         print('Data Received: "{data}"'.format(data=data))
         return "Request Processed.\n"
 
-@app.route('/getSolutions/<int:execution_id>', methods=['GET'])
-def get_solutions(execution_id):
+@app.route('/getSolutions/<int:prp_process_id>', methods=['GET'])
+def get_solutions(prp_process_id):
     if request.method == 'GET':
         data = {
                 "id":1,
                 "prp_process_id":1,
-                "alternatives":
-                [
-                    {
-                        "alternative_id":1,
-                        "issues":
-                        [
-                            {
-                                "issue_id":1,
-                                "priority_id": 1
-                            },
-                            {
-                                "issue_id":2,
-                                "priority_id": 2
-                            },
-                            {
-                                "issue_id":3,
-                                "priority_id": 1
-                            },
-                            {
-                                "issue_id":4,
-                                "priority_id": 2
-                            },
-                            {
-                                "issue_id":5,
-                                "priority_id": 3
-                            }
-                        ]
-                    },
-                    {
-                        "alternative_id":2,
-                        "issues":
-                        [
-                            {
-                                "issue_id":1,
-                                "priority_id": 3
-                            },
-                            {
-                                "issue_id":2,
-                                "priority_id": 2
-                            },
-                            {
-                                "issue_id":3,
-                                "priority_id": 2
-                            },
-                            {
-                                "issue_id":4,
-                                "priority_id": 1
-                            },
-                            {
-                                "issue_id":5,
-                                "priority_id": 1
-                            }
-                        ]
-                    }
-                ]
-                     
-            }
+                "executions": 
+                 [
+                     {
+                       "id":1,
+                       "alternatives":
+                       [
+                           {
+                               "alternative_id":1,
+                               "issues":
+                               [
+                                   {
+                                       "issue_id":1,
+                                       "priority_id": 1
+                                   },
+                                   {
+                                       "issue_id":2,
+                                       "priority_id": 2
+                                   },
+                                   {
+                                       "issue_id":3,
+                                       "priority_id": 1
+                                   },
+                                   {
+                                       "issue_id":4,
+                                       "priority_id": 2
+                                   },
+                                   {
+                                       "issue_id":5,
+                                       "priority_id": 3
+                                   }
+                               ]
+                           },
+                           {
+                               "alternative_id":2,
+                               "issues":
+                               [
+                                   {
+                                       "issue_id":1,
+                                       "priority_id": 3
+                                   },
+                                   {
+                                       "issue_id":2,
+                                       "priority_id": 2
+                                   },
+                                   {
+                                       "issue_id":3,
+                                       "priority_id": 2
+                                   },
+                                   {
+                                       "issue_id":4,
+                                       "priority_id": 1
+                                   },
+                                   {
+                                       "issue_id":5,
+                                       "priority_id": 1
+                                   }
+                               ]
+                           }
+                       ]
+                     },     
+                     {
+                       "id":2,
+                       "alternatives":
+                       [
+                           {
+                               "alternative_id":1,
+                               "issues":
+                               [
+                                   {
+                                       "issue_id":1,
+                                       "priority_id": 1
+                                   },
+                                   {
+                                       "issue_id":2,
+                                       "priority_id": 2
+                                   },
+                                   {
+                                       "issue_id":3,
+                                       "priority_id": 1
+                                   },
+                                   {
+                                       "issue_id":4,
+                                       "priority_id": 2
+                                   },
+                                   {
+                                       "issue_id":5,
+                                       "priority_id": 3
+                                   }
+                               ]
+                           }
+                       ]
+                     }
+                 ]
+              }
         return jsonify(data)
+
 @app.route('/getAlgorithms', methods=['GET'])
 def get_algorithms():
     if request.method == 'GET':
