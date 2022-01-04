@@ -25,6 +25,7 @@ def get_solutions(prp_process_id):
                  [
                      {
                        "id":1,
+                       "status":"finished",
                        "alternatives":
                        [
                            {
@@ -83,6 +84,7 @@ def get_solutions(prp_process_id):
                      },     
                      {
                        "id":2,
+                       "status":"finished",
                        "alternatives":
                        [
                            {
