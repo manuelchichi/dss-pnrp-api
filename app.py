@@ -15,107 +15,36 @@ def post_execution():
         print('Data Received: "{data}"'.format(data=data))
         return "Request Processed.\n"
 
-@app.route('/getSolutions/<int:prp_process_id>', methods=['GET'])
-def get_solutions(prp_process_id):
+@app.route('/getExecution/<int:prp_execution_id>', methods=['GET'])
+def get_execution(prp_execution_id):
     if request.method == 'GET':
         data = {
                 "id":1,
                 "prp_process_id":1,
-                "executions": 
-                 [
-                     {
-                       "id":1,
-                       "status":"finished",
-                       "alternatives":
-                       [
-                           {
-                               "alternative_id":1,
-                               "issues":
-                               [
-                                   {
-                                       "issue_id":1,
-                                       "priority_id": 1
-                                   },
-                                   {
-                                       "issue_id":2,
-                                       "priority_id": 2
-                                   },
-                                   {
-                                       "issue_id":3,
-                                       "priority_id": 1
-                                   },
-                                   {
-                                       "issue_id":4,
-                                       "priority_id": 2
-                                   },
-                                   {
-                                       "issue_id":5,
-                                       "priority_id": 3
-                                   }
-                               ]
-                           },
-                           {
-                               "alternative_id":2,
-                               "issues":
-                               [
-                                   {
-                                       "issue_id":1,
-                                       "priority_id": 3
-                                   },
-                                   {
-                                       "issue_id":2,
-                                       "priority_id": 2
-                                   },
-                                   {
-                                       "issue_id":3,
-                                       "priority_id": 2
-                                   },
-                                   {
-                                       "issue_id":4,
-                                       "priority_id": 1
-                                   },
-                                   {
-                                       "issue_id":5,
-                                       "priority_id": 1
-                                   }
-                               ]
-                           }
-                       ]
-                     },     
-                     {
-                       "id":2,
-                       "status":"finished",
-                       "alternatives":
-                       [
-                           {
-                               "alternative_id":1,
-                               "issues":
-                               [
-                                   {
-                                       "issue_id":1,
-                                       "priority_id": 1
-                                   },
-                                   {
-                                       "issue_id":2,
-                                       "priority_id": 2
-                                   },
-                                   {
-                                       "issue_id":3,
-                                       "priority_id": 1
-                                   },
-                                   {
-                                       "issue_id":4,
-                                       "priority_id": 2
-                                   },
-                                   {
-                                       "issue_id":5,
-                                       "priority_id": 3
-                                   }
-                               ]
-                           }
-                       ]
-                     }
-                 ]
+                "prp_execution_id":1,
+                "solution":
+                  [
+                      {
+                          "issue_id":1,
+                          "position": 1
+                      },
+                      {
+                          "issue_id":2,
+                          "position": 2
+                      },
+                      {
+                          "issue_id":3,
+                          "position": 1
+                      },
+                      {
+                          "issue_id":4,
+                          "position": 3
+                      },
+                      {
+                          "issue_id":5,
+                          "position": 4
+                      }
+                  ]
               }
         return jsonify(data)
 
