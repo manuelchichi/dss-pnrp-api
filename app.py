@@ -1,5 +1,11 @@
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
+from flask_expects_json import expects_json
+import numpy as np
+import pandas as pd
+import itertools
+
+
 app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb://api_user:password123@mongo:27017/api"
 mongo = PyMongo(app)
@@ -8,11 +14,29 @@ mongo = PyMongo(app)
 def health():
     return "<p>OK</p>"
 
+schema = {
+    "type": "object",
+    "properties": {
+        "criteria": {"type": "object"},
+        "issues": {"type": "array",
+                   "items": {"type": "object",
+                             "properties": {
+                                    "id": {"type": "number"},
+                                    "eval": {"type": "object"}
+                                    }
+                            }
+                  }
+    },
+    "required": ["criteria", "issues"]
+}
+
 @app.route('/execution', methods=['POST'])
+@expects_json(schema)
 def post_execution():
     if request.method == 'POST':
-        data = mongo.db.execution.insert(request.get_json())
-        print('Data Received: "{data}"'.format(data=data))
+        data = request.get_json()
+        #data = mongo.db.execution.insert(request.get_json())
+        #print('Data Received: "{data}"'.format(data=data))
         return "Request Processed.\n"
 
 @app.route('/getSolutions/<int:prp_process_id>', methods=['GET'])
@@ -21,7 +45,7 @@ def get_solutions(prp_process_id):
         data = {
                 "id":1,
                 "prp_process_id":1,
-                "executions": 
+                "executions":
                  [
                      {
                        "id":1,
@@ -81,7 +105,7 @@ def get_solutions(prp_process_id):
                                ]
                            }
                        ]
-                     },     
+                     },
                      {
                        "id":2,
                        "status":"finished",
@@ -122,7 +146,7 @@ def get_solutions(prp_process_id):
 @app.route('/getAlgorithms', methods=['GET'])
 def get_algorithms():
     if request.method == 'GET':
-        data = {   
+        data = {
                 "algorithms":
                 [
                     {
