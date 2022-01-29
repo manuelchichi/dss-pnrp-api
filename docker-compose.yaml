@@ -12,7 +12,8 @@ services:
       - default
       - redmine
     environment:
-      - MONGODB_URL=mongodb+srv://api_user:password123@mongo/api?retryWrites=true&w=majority
+      - MONGODB_URL=mongodb://api_user:password123@mongo/api?retryWrites=true&w=majority
+    command: ["/start-reload.sh"]
   mongo:
     image: "bitnami/mongodb:4.2" 
     environment:

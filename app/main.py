@@ -1,6 +1,7 @@
 import os
 
 from fastapi import FastAPI, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import motor.motor_asyncio
@@ -18,7 +19,7 @@ def health():
     return {"status": "OK"}
 
 @app.post("/execution/")
-async def create_execution(execution: ExecutionModel = Body(...)):
+async def create_execution(execution: ExecutionModel):
     execution = jsonable_encoder(execution)
     new_execution = await db["executions"].insert_one(executions)
     created_execution = await db["executions"].find_one({"_id": new_execution.inserted_id})
@@ -54,7 +55,8 @@ def execution(prp_execution_id: int):
                   }
             ]
           }
-    return jsonify(data)
+    json_compatible_execution_data = jsonable_encoder(data)
+    return JSONResponse(content=json_compatible_execution_data)
 
 @app.get('/algorithms')
 def algorithms():
@@ -106,4 +108,5 @@ def algorithms():
                 }
             ]
         }
-    return jsonify(data)
+    json_compatible_algorithm_data = jsonable_encoder(data)
+    return JSONResponse(content=json_compatible_algorithm_data)
