@@ -1,22 +1,26 @@
 version: "3.8"
 
 services:
-  flask:
+  fastapi:
     build: .
     ports:
       - "8000:80"
     volumes:
-      - "./:/app"
+      - "./app:/app"
     restart: on-failure
     networks:
       - default
       - redmine
+    environment:
+      - MONGODB_URL=mongodb://api_user:password123@mongo/api?retryWrites=true&w=majority
+    command: ["/start-reload.sh"]
   mongo:
     image: "bitnami/mongodb:4.2" 
     environment:
       - MONGODB_USERNAME=api_user
       - MONGODB_PASSWORD=password123
       - MONGODB_DATABASE=api
+      - ALLOW_EMPTY_PASSWORD=yes
     volumes:
       - mongo-data:/bitnami/mongodb
     restart: on-failure
