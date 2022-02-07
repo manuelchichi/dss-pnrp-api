@@ -10,6 +10,7 @@ import motor.motor_asyncio
 app = FastAPI()
 client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGODB_URL"])
 db = client
+execution_collection = db.get_collection("executions_collection")
 
 
 # Models used for "execution"
@@ -64,7 +65,7 @@ def build_solution(order, issues):
 
 
 # Data processing background task
-def solve_execution(execution_dict):
+async def solve_execution(execution_dict):
     criteria = execution_dict["criteria"]
     issues = execution_dict["issues"]
 
@@ -108,10 +109,13 @@ def solve_execution(execution_dict):
         strict_relation = np.delete(np.delete(strict_relation, non_dominated, 0), non_dominated, 1)
 
     # Building solution with the obtained order
-    solution = build_solution(order, issues)
-
-
-## TO DO: Update execution with the obtained solution #
+    new_execution = {
+        "prp_process_id": execution["prp_process_id"],
+        "prp_execution_id": execution["prp_execution_id"],
+        "solution": build_solution(order, issues)
+    }
+    # Update execution with the obtained solution
+    await db["executions"].update_one({"prp_execution_id": new_execution["prp_execution_id"]}, {"$set": new_execution})
 
 
 @app.post("/execution/")
@@ -133,10 +137,15 @@ async def create_execution(execution: ExecutionModel, background_tasks: Backgrou
             return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=execution)
     # JSON validated; Solving execution on background task
     background_tasks.add_task(solve_execution, execution)
-    ##TO DO: Insert execution with empty solution#
-    # new_execution = await db["executions"].insert_one(solution)
-    # created_execution = await db["executions"].find_one({"_id": new_execution.inserted_id})
-    return JSONResponse(status_code=status.HTTP_200_OK)
+    # Inserting with an empty solution in db
+    new_execution = {
+        "prp_process_id": execution["prp_process_id"],
+        "prp_execution_id": execution["prp_execution_id"],
+        "solution": []
+    }
+    inserted_execution = await db["executions"].insert_one(new_execution)
+    created_execution = await db["executions"].find_one({"_id": inserted_execution.inserted_id})
+    return JSONResponse(status_code=status.HTTP_200_OK, content=created_execution)
 
 
 @app.get('/execution/{prp_execution_id}')
@@ -225,3 +234,20 @@ def algorithms():
     }
     json_compatible_algorithm_data = jsonable_encoder(data)
     return JSONResponse(content=json_compatible_algorithm_data)
+
+
+# Obtain unfinished executions
+async def retrieve_executions():
+    executions = []
+    async for execution in execution_collection.find():
+        if len(execution["solution"]) == 0:
+            executions.append(execution)
+    return executions
+
+
+# On startup solve all unfinished executions
+@app.on_event("startup")
+async def startup_event():
+    pending_executions = retrieve_executions()
+    async for execution in pending_executions:
+        solve_execution(execution)
