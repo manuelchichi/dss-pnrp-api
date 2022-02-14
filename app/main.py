@@ -149,37 +149,65 @@ async def create_execution(execution: ExecutionModel, background_tasks: Backgrou
 
 
 @app.get('/execution/{prp_execution_id}')
-def execution(prp_execution_id: int):
-    data = {
-        "id": 1,
-        "prp_process_id": 1,
-        "prp_execution_id": 1,
-        "solution":
-            [
-                {
-                    "issue_id": 1,
-                    "position": 1
-                },
-                {
-                    "issue_id": 2,
-                    "position": 2
-                },
-                {
-                    "issue_id": 3,
-                    "position": 1
-                },
-                {
-                    "issue_id": 4,
-                    "position": 3
-                },
-                {
-                    "issue_id": 5,
-                    "position": 4
-                }
-            ]
-    }
-    json_compatible_execution_data = jsonable_encoder(data)
-    return JSONResponse(content=json_compatible_execution_data)
+async def execution(prp_execution_id: int):
+    execution = await db["executions"].find_one({"prp_execution_id": prp_execution_id})
+    if execution is not None:
+        json_compatible_execution_data = jsonable_encoder(execution)
+        return JSONResponse(content=json_compatible_execution_data)
+    return JSONResponse(status_code=status.HTTP_404_NOT_FOUND)
+    # data = {
+    #     "id": 1,
+    #     "prp_process_id": 1,
+    #     "prp_execution_id": 1,
+    #     "solution":
+    #         [
+    #             {
+    #                 "issue_id": 1,
+    #                 "position": 1
+    #             },
+    #             {
+    #                 "issue_id": 2,
+    #                 "position": 2
+    #             },
+    #             {
+    #                 "issue_id": 3,
+    #                 "position": 1
+    #             },
+    #             {
+    #                 "issue_id": 4,
+    #                 "position": 3
+    #             },
+    #             {
+    #                 "issue_id": 5,
+    #                 "position": 4
+    #             }
+    #         ]
+    # }
+
+
+@app.get('/executions/{prp_process_id}')
+async def executions(prp_process_id: int):
+    executions = await db["executions"].find_one({"prp_process_id": prp_process_id})
+    if executions is not None:
+        json_compatible_execution_data = jsonable_encoder(executions)
+        return JSONResponse(content=json_compatible_execution_data)
+    return JSONResponse(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@app.delete('/execution/{prp_execution_id}')
+async def clean_execution(prp_execution_id: int):
+    delete_result = await db["executions"].delete_one({"prp_execution_id": prp_execution_id})
+    if delete_result.deleted_count == 1:
+        return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
+    raise HTTPException(status_code=404, detail=f"Execution {prp_execution_id} not found")
+
+
+@app.delete('/executions/{prp_process_id}')
+async def clean_executions(prp_process_id: int):
+    delete_result = await db["executions"].delete({"prp_process_id": prp_process_id})
+    if delete_result.deleted_count != 0:
+        return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
+    raise HTTPException(status_code=404, detail=f"Executions from process {prp_process_id} not found")
 
 
 @app.get('/algorithms')
