@@ -34,9 +34,38 @@ class PyObjectId(ObjectId):
 
 # Models used for "execution"
 class CriteriaModel(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    name: str = Field(...)
+    criteria_id: int = Field(...)
     value: float = Field(...)
+    class Config:
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        schema_extra = {
+            "example": {
+                "criteria_id": 1 ,
+                "value": 15.3
+            }
+        }
+
+class IssueModel(BaseModel):
+    issue_id: int = Field(...)
+    eval: List[CriteriaModel] = []
+    class Config:
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        schema_extra = {
+            "example": {
+                "issue_id": 5,
+                "eval": 15
+            }
+        }
+
+class PPExecutionModel(BaseModel):
+    priorization_process_id: int = Field(...)
+    pp_execution_id: int = Field(...)
+    criterias: List[CriteriaModel] = []
+    issues: List[IssueModel] = []
     class Config:
         allow_population_by_field_name = True
         arbitrary_types_allowed = True
@@ -47,18 +76,6 @@ class CriteriaModel(BaseModel):
                 "value": 15
             }
         }
-
-class IssueModel(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    issue_id: int = Field(...)
-    eval: List[CriteriaModel] = []
-
-class ExecutionModel(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    prp_process_id: int = Field(...)
-    prp_execution_id: int = Field(...)
-    criteria: List[CriteriaModel] = []
-    issues: List[IssueModel] = []
 
 
 @app.get("/health")
@@ -96,7 +113,7 @@ def build_solution(order, issues):
 
 # Data processing background task
 async def solve_execution(execution_dict):
-    criteria = execution_dict["criteria"]
+    criterias = execution_dict["criterias"]
     issues = execution_dict["issues"]
 
     # check criteria maps to numeric
@@ -148,15 +165,15 @@ async def solve_execution(execution_dict):
     await db["executions"].update_one({"prp_execution_id": new_execution["prp_execution_id"]}, {"$set": new_execution})
 
 
-@app.post("/execution/")
-async def create_execution(execution: ExecutionModel, background_tasks: BackgroundTasks):
+@app.post("/execution")
+async def create_execution(execution: PPExecutionModel, background_tasks: BackgroundTasks):
     execution = jsonable_encoder(execution)
 
     ####Validating input
     # Saving instead of calculating it multiple times
-    criteria_len = len(execution["criteria"])
+    criterias_len = len(execution["criterias"])
     for issue in execution["issues"]:
-        if len(issue["eval"]) == criteria_len:
+        if len(issue["eval"]) == criterias_len:
             # Cardinality matched, checking if all keys match as well
             for criterion in execution["criteria"]:
                 if not (criterion in issue["eval"]):
