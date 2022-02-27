@@ -33,7 +33,7 @@ class PyObjectId(ObjectId):
         field_schema.update(type="string")
 
 # Models used for "execution"
-class CriteriaModel(BaseModel):
+class CriteriaRetrieveModel(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     criteria_id: int = Field(...)
     value: float = Field(...)
@@ -48,10 +48,24 @@ class CriteriaModel(BaseModel):
             }
         }
 
-class IssueModel(BaseModel):
+class CriteriaCreateModel(BaseModel):
+    criteria_id: int = Field(...)
+    value: float = Field(...)
+    class Config:
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        schema_extra = {
+            "example": {
+                "criteria_id": 1 ,
+                "value": 15.3
+            }
+        }
+
+class IssueRetrieveModel(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     issue_id: int = Field(...)
-    eval: List[CriteriaModel] = []
+    eval: List[CriteriaRetrieveModel] = []
     class Config:
         allow_population_by_field_name = True
         arbitrary_types_allowed = True
@@ -63,12 +77,41 @@ class IssueModel(BaseModel):
             }
         }
 
-class PPExecutionModel(BaseModel):
+class IssueCreateModel(BaseModel):
+    issue_id: int = Field(...)
+    eval: List[CriteriaCreateModel] = []
+    class Config:
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        schema_extra = {
+            "example": {
+                "issue_id": 5,
+                "eval": 15
+            }
+        }
+class PPExecutionCreateModel(BaseModel):
+    priorization_process_id: int = Field(...)
+    pp_execution_id: int = Field(...)
+    criterias: List[CriteriaCreateModel] = []
+    issues: List[IssueCreateModel] = []
+    class Config:
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        schema_extra = {
+            "example": {
+                "name": "Time",
+                "value": 15
+            }
+        }
+
+class PPExecutionRetrieveModel(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     priorization_process_id: int = Field(...)
     pp_execution_id: int = Field(...)
-    criterias: List[CriteriaModel] = []
-    issues: List[IssueModel] = []
+    criterias: List[CriteriaRetrieveModel] = []
+    issues: List[IssueRetrieveModel] = []
     class Config:
         allow_population_by_field_name = True
         arbitrary_types_allowed = True
@@ -92,8 +135,13 @@ def construct_comparison_matrix(criterion, issues):
 
     # Comparison matrix
     comparison_matrix = np.array(
-        [[comparison_mu(issue_i["eval"][criterion], issue_j["eval"][criterion]) for j, issue_j in enumerate(issues)] for
-         i, issue_i in enumerate(issues)])
+        [[comparison_mu(criteria_i["value"], criteria_j["value"])
+            for issue_j in issues
+                for criteria_j in issue_j["eval"]
+                    if criteria_j["criteria_id"] == criterion]
+                        for issue_i in issues
+                            for criteria_i in issue_i["eval"]
+                                if criteria_i["criteria_id"] == criterion])
 
     return comparison_matrix
 
@@ -109,7 +157,7 @@ def build_solution(order, issues):
     solution = []
     for position_list in order:
         solution.extend(
-            [{"issue_id": issues[position]["id"], "position": actual_position} for position in position_list])
+            [{"issue_id": issues[position]["issue_id"], "position": actual_position} for position in position_list])
         actual_position += len(position_list)
     return solution
 
@@ -118,14 +166,14 @@ def build_solution(order, issues):
 async def solve_execution(execution_dict):
     criterias = execution_dict["criterias"]
     issues = execution_dict["issues"]
-
+    
+    criterias_values = [c["value"] for c in criterias if "value" in c]
     # check criteria maps to numeric
-
     # check every issue has all required evaluations and are numeric
 
     # normalize criteria weights
-    max_weight = max(criteria.values())
-    normalized_criteria = {name: (weight / max_weight) for name, weight in criteria.items()}
+    max_weight = max(criterias_values)
+    normalized_criteria = {c["criteria_id"]: (c["value"] / max_weight) for c in criterias}
 
     indexes = np.array([i for i, _ in enumerate(issues)])
     global_comparison_matrix = []
@@ -159,17 +207,21 @@ async def solve_execution(execution_dict):
         strict_relation = np.delete(np.delete(strict_relation, non_dominated, 0), non_dominated, 1)
 
     # Building solution with the obtained order
+    solution = build_solution(order, issues)
+
+    print(solution)
+
     new_execution = {
-        "prp_process_id": execution["prp_process_id"],
-        "prp_execution_id": execution["prp_execution_id"],
-        "solution": build_solution(order, issues)
+        "priorization_process_id": execution_dict["priorization_process_id"],
+        "pp_execution_id": execution_dict["pp_execution_id"],
+        "solution": solution
     }
     # Update execution with the obtained solution
-    await db["executions"].update_one({"prp_execution_id": new_execution["prp_execution_id"]}, {"$set": new_execution})
+    await db["executions"].update_one({"pp_execution_id": new_execution["pp_execution_id"]}, {"$set": new_execution})
 
 
 @app.post("/execution")
-async def create_execution(execution: PPExecutionModel, background_tasks: BackgroundTasks):
+async def create_execution(execution: PPExecutionCreateModel, background_tasks: BackgroundTasks):
     execution = jsonable_encoder(execution)
 
     ####Validating input
@@ -196,70 +248,41 @@ async def create_execution(execution: PPExecutionModel, background_tasks: Backgr
         "solution": []
     }
     inserted_execution = await db["executions"].insert_one(new_execution)
-    created_execution = await db["executions"].find_one({"_id": inserted_execution.inserted_id})
+    created_execution = await db["executions"].find_one({"id": inserted_execution.inserted_id})
     return JSONResponse(status_code=status.HTTP_200_OK, content=created_execution)
 
 
-@app.get('/execution/{prp_execution_id}')
-async def execution(prp_execution_id: int):
-    execution = await db["executions"].find_one({"prp_execution_id": prp_execution_id})
+@app.get('/execution/{pp_execution_id}')
+async def execution(pp_execution_id: int):
+    execution = await db["executions"].find_one({"pp_execution_id": pp_execution_id},{'_id': 0})
     if execution is not None:
         json_compatible_execution_data = jsonable_encoder(execution)
         return JSONResponse(content=json_compatible_execution_data)
     return JSONResponse(status_code=status.HTTP_404_NOT_FOUND)
-    # data = {
-    #     "id": 1,
-    #     "prp_process_id": 1,
-    #     "prp_execution_id": 1,
-    #     "solution":
-    #         [
-    #             {
-    #                 "issue_id": 1,
-    #                 "position": 1
-    #             },
-    #             {
-    #                 "issue_id": 2,
-    #                 "position": 2
-    #             },
-    #             {
-    #                 "issue_id": 3,
-    #                 "position": 1
-    #             },
-    #             {
-    #                 "issue_id": 4,
-    #                 "position": 3
-    #             },
-    #             {
-    #                 "issue_id": 5,
-    #                 "position": 4
-    #             }
-    #         ]
-    # }
 
-
-@app.get('/executions/{prp_process_id}')
-async def executions(prp_process_id: int):
-    executions = await db["executions"].find_one({"prp_process_id": prp_process_id})
+@app.get('/executions/{priorization_process_id}')
+async def executions(priorization_process_id: int):
+    executions = await db["executions"].find_one({"priorization_process_id": priorization_process_id},{'_id': 0})
     if executions is not None:
         json_compatible_execution_data = jsonable_encoder(executions)
         return JSONResponse(content=json_compatible_execution_data)
     return JSONResponse(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@app.delete('/execution/{prp_execution_id}')
-async def clean_execution(prp_execution_id: int):
-    delete_result = await db["executions"].delete_one({"prp_execution_id": prp_execution_id})
+@app.delete('/execution/{pp_execution_id}')
+async def clean_execution(pp_execution_id: int):
+    delete_result = await db["executions"].delete_one({"pp_execution_id": pp_execution_id})
     if delete_result.deleted_count == 1:
         return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
-    raise HTTPException(status_code=404, detail=f"Execution {prp_execution_id} not found")
+    raise HTTPException(status_code=404, detail=f"Execution {pp_execution_id} not found")
 
 
-@app.delete('/executions/{prp_process_id}')
-async def clean_executions(prp_process_id: int):
-    delete_result = await db["executions"].delete({"prp_process_id": prp_process_id})
+@app.delete('/executions/{priorization_process_id}')
+async def clean_executions(priorization_process_id: int):
+    delete_result = await db["executions"].delete({"priorization_process_id": priorization_process_id})
     if delete_result.deleted_count != 0:
         return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
-    raise HTTPException(status_code=404, detail=f"Executions from process {prp_process_id} not found")
+    raise HTTPException(status_code=404, detail=f"Executions from process {priorization_process_id} not found")
 
 
 @app.get('/algorithms')
