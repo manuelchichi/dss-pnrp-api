@@ -34,6 +34,7 @@ class PyObjectId(ObjectId):
 
 # Models used for "execution"
 class CriteriaModel(BaseModel):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     criteria_id: int = Field(...)
     value: float = Field(...)
     class Config:
@@ -48,6 +49,7 @@ class CriteriaModel(BaseModel):
         }
 
 class IssueModel(BaseModel):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     issue_id: int = Field(...)
     eval: List[CriteriaModel] = []
     class Config:
@@ -62,6 +64,7 @@ class IssueModel(BaseModel):
         }
 
 class PPExecutionModel(BaseModel):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     priorization_process_id: int = Field(...)
     pp_execution_id: int = Field(...)
     criterias: List[CriteriaModel] = []
@@ -175,10 +178,12 @@ async def create_execution(execution: PPExecutionModel, background_tasks: Backgr
     for issue in execution["issues"]:
         if len(issue["eval"]) == criterias_len:
             # Cardinality matched, checking if all keys match as well
-            for criterion in execution["criteria"]:
-                if not (criterion in issue["eval"]):
+            for criteria in execution["criterias"]:
+                print(criteria['criteria_id'])
+                #print(issue["eval"]['criteria_id'])
+                #if not (criteria['criteria_id'] in issue["eval"]['criteria_id']):
                     # A key is missing
-                    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=execution)
+                #    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=execution)
         else:
             # Cardinality of criteria and eval didn't match
             return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=execution)
@@ -186,8 +191,8 @@ async def create_execution(execution: PPExecutionModel, background_tasks: Backgr
     background_tasks.add_task(solve_execution, execution)
     # Inserting with an empty solution in db
     new_execution = {
-        "prp_process_id": execution["prp_process_id"],
-        "prp_execution_id": execution["prp_execution_id"],
+        "priorization_process_id": execution["priorization_process_id"],
+        "pp_execution_id": execution["pp_execution_id"],
         "solution": []
     }
     inserted_execution = await db["executions"].insert_one(new_execution)
