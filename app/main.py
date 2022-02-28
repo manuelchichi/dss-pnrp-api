@@ -198,7 +198,6 @@ async def solve_execution(execution_dict):
     # Non dominance vector
     while len(indexes) > 0:
         non_dominance_vector = 1 - np.amax(strict_relation, 0)
-        print(non_dominance_vector)
         non_dominated = np.where(non_dominance_vector == max(non_dominance_vector))
         # get non dominated requirements
         order.append(list(indexes[non_dominated]))
@@ -207,14 +206,10 @@ async def solve_execution(execution_dict):
         strict_relation = np.delete(np.delete(strict_relation, non_dominated, 0), non_dominated, 1)
 
     # Building solution with the obtained order
-    solution = build_solution(order, issues)
-
-    print(solution)
-
     new_execution = {
         "priorization_process_id": execution_dict["priorization_process_id"],
         "pp_execution_id": execution_dict["pp_execution_id"],
-        "solution": solution
+        "solution": build_solution(order, issues)
     }
     # Update execution with the obtained solution
     await db["executions"].update_one({"pp_execution_id": new_execution["pp_execution_id"]}, {"$set": new_execution})
@@ -231,11 +226,10 @@ async def create_execution(execution: PPExecutionCreateModel, background_tasks: 
         if len(issue["eval"]) == criterias_len:
             # Cardinality matched, checking if all keys match as well
             for criteria in execution["criterias"]:
-                print(criteria['criteria_id'])
-                #print(issue["eval"]['criteria_id'])
-                #if not (criteria['criteria_id'] in issue["eval"]['criteria_id']):
-                    # A key is missing
-                #    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=execution)
+               if not (criteria['criteria_id'] in [criteria_issue["criteria_id"]
+                   for criteria_issue in issue["eval"]]):
+                   # A key is missing
+                   return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=execution)
         else:
             # Cardinality of criteria and eval didn't match
             return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=execution)
@@ -285,8 +279,17 @@ async def clean_executions(priorization_process_id: int):
     raise HTTPException(status_code=404, detail=f"Executions from process {priorization_process_id} not found")
 
 
-@app.get('/algorithms')
-def algorithms():
+@app.get('/algorithms/pp')
+def algorithmspp():
+    data = {
+        "algorithms":
+            []
+    }
+    json_compatible_algorithm_data = jsonable_encoder(data)
+    return JSONResponse(content=json_compatible_algorithm_data)
+
+@app.get('/algorithms/nrp')
+def algorithmsnrp():
     data = {
         "algorithms":
             [
