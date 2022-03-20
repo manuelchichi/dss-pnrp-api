@@ -91,7 +91,7 @@ class IssueCreateModel(BaseModel):
             }
         }
 class PPExecutionCreateModel(BaseModel):
-    priorization_process_id: int = Field(...)
+    prioritization_process_id: int = Field(...)
     pp_execution_id: int = Field(...)
     criterias: List[CriteriaCreateModel] = []
     issues: List[IssueCreateModel] = []
@@ -108,7 +108,7 @@ class PPExecutionCreateModel(BaseModel):
 
 class PPExecutionRetrieveModel(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    priorization_process_id: int = Field(...)
+    prioritization_process_id: int = Field(...)
     pp_execution_id: int = Field(...)
     criterias: List[CriteriaRetrieveModel] = []
     issues: List[IssueRetrieveModel] = []
@@ -207,7 +207,7 @@ async def solve_execution(execution_dict):
 
     # Building solution with the obtained order
     new_execution = {
-        "priorization_process_id": execution_dict["priorization_process_id"],
+        "prioritization_process_id": execution_dict["prioritization_process_id"],
         "pp_execution_id": execution_dict["pp_execution_id"],
         "solution": build_solution(order, issues)
     }
@@ -237,7 +237,7 @@ async def create_execution(execution: PPExecutionCreateModel, background_tasks: 
     background_tasks.add_task(solve_execution, execution)
     # Inserting with an empty solution in db
     new_execution = {
-        "priorization_process_id": execution["priorization_process_id"],
+        "prioritization_process_id": execution["prioritization_process_id"],
         "pp_execution_id": execution["pp_execution_id"],
         "solution": []
     }
@@ -254,9 +254,9 @@ async def execution(pp_execution_id: int):
         return JSONResponse(content=json_compatible_execution_data)
     return JSONResponse(status_code=status.HTTP_404_NOT_FOUND)
 
-@app.get('/executions/{priorization_process_id}')
-async def executions(priorization_process_id: int):
-    executions = await db["executions"].find_one({"priorization_process_id": priorization_process_id},{'_id': 0})
+@app.get('/executions/{prioritization_process_id}')
+async def executions(prioritization_process_id: int):
+    executions = await db["executions"].find_one({"prioritization_process_id": prioritization_process_id},{'_id': 0})
     if executions is not None:
         json_compatible_execution_data = jsonable_encoder(executions)
         return JSONResponse(content=json_compatible_execution_data)
@@ -271,12 +271,12 @@ async def clean_execution(pp_execution_id: int):
     raise HTTPException(status_code=404, detail=f"Execution {pp_execution_id} not found")
 
 
-@app.delete('/executions/{priorization_process_id}')
-async def clean_executions(priorization_process_id: int):
-    delete_result = await db["executions"].delete({"priorization_process_id": priorization_process_id})
+@app.delete('/executions/{prioritization_process_id}')
+async def clean_executions(prioritization_process_id: int):
+    delete_result = await db["executions"].delete({"prioritization_process_id": prioritization_process_id})
     if delete_result.deleted_count != 0:
         return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
-    raise HTTPException(status_code=404, detail=f"Executions from process {priorization_process_id} not found")
+    raise HTTPException(status_code=404, detail=f"Executions from process {prioritization_process_id} not found")
 
 
 @app.get('/algorithms/pp')
