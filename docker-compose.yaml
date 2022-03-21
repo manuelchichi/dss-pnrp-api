@@ -2,18 +2,14 @@ version: "3.8"
 
 services:
   fastapi:
-    build: .
     ports:
       - "8000:80"
-    volumes:
-      - "./app:/app"
     restart: on-failure
     networks:
       - default
       - redmine
     environment:
       - MONGODB_URL=mongodb://api_user:password123@mongo/api?retryWrites=true&w=majority
-    command: ["/start-reload.sh"]
   mongo:
     image: "bitnami/mongodb:4.2" 
     environment:
@@ -34,5 +30,3 @@ networks:
 
 volumes:
   mongo-data:
-  mongo-configdb:
-

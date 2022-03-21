@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  fastapi:
+    image: fastapi-dev
+    build:
+      context: .
+      target: base
+    volumes:
+      - "./app:/app"
+    command: ["/start-reload.sh"]
