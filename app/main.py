@@ -11,11 +11,26 @@ from bson import ObjectId
 from typing import List
 import motor.motor_asyncio
 
-app = FastAPI()
-client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGODB_URL"])
-db = client['api']
-execution_collection = db.get_collection("executions_collection")
+app = FastAPI(title="DSS_PNRP_API",
+              version="0.0.1")
 
+db_client: motor.motor_asyncio.AsyncIOMotorClient = None
+
+async def get_db_client() -> motor.motor_asyncio.AsyncIOMotorClient:
+    """Return database client instance."""
+    return db_client
+
+async def connect_db():
+    """Create database connection."""
+    global db_client
+    db_client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGODB_URL"])
+
+async def close_db():
+    """Close database connection."""
+    db_client.close()
+
+app.add_event_handler("startup", connect_db)
+app.add_event_handler("shutdown", close_db)
 
 class PyObjectId(ObjectId):
     @classmethod
@@ -212,7 +227,7 @@ async def solve_execution(execution_dict):
         "solution": build_solution(order, issues)
     }
     # Update execution with the obtained solution
-    await db["executions"].update_one({"pp_execution_id": new_execution["pp_execution_id"]}, {"$set": new_execution})
+    await db_client["api"]["executions"].update_one({"pp_execution_id": new_execution["pp_execution_id"]}, {"$set": new_execution})
 
 
 @app.post("/execution")
@@ -241,14 +256,14 @@ async def create_execution(execution: PPExecutionCreateModel, background_tasks: 
         "pp_execution_id": execution["pp_execution_id"],
         "solution": []
     }
-    inserted_execution = await db["executions"].insert_one(new_execution)
-    created_execution = await db["executions"].find_one({"id": inserted_execution.inserted_id})
+    inserted_execution = await db_client["api"]["executions"].insert_one(new_execution)
+    created_execution = await db_client["api"]["executions"].find_one({"id": inserted_execution.inserted_id})
     return JSONResponse(status_code=status.HTTP_200_OK, content=created_execution)
 
 
 @app.get('/execution/{pp_execution_id}')
 async def execution(pp_execution_id: int):
-    execution = await db["executions"].find_one({"pp_execution_id": pp_execution_id},{'_id': 0})
+    execution = await db_client["api"]["executions"].find_one({"pp_execution_id": pp_execution_id},{'_id': 0})
     if execution is not None:
         json_compatible_execution_data = jsonable_encoder(execution)
         return JSONResponse(content=json_compatible_execution_data)
@@ -256,7 +271,7 @@ async def execution(pp_execution_id: int):
 
 @app.get('/executions/{prioritization_process_id}')
 async def executions(prioritization_process_id: int):
-    executions = await db["executions"].find_one({"prioritization_process_id": prioritization_process_id},{'_id': 0})
+    executions = await db_client["api"]["executions"].find_one({"prioritization_process_id": prioritization_process_id},{'_id': 0})
     if executions is not None:
         json_compatible_execution_data = jsonable_encoder(executions)
         return JSONResponse(content=json_compatible_execution_data)
@@ -265,7 +280,7 @@ async def executions(prioritization_process_id: int):
 
 @app.delete('/execution/{pp_execution_id}')
 async def clean_execution(pp_execution_id: int):
-    delete_result = await db["executions"].delete_one({"pp_execution_id": pp_execution_id})
+    delete_result = await db_client["api"]["executions"].delete_one({"pp_execution_id": pp_execution_id})
     if delete_result.deleted_count == 1:
         return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
     raise HTTPException(status_code=404, detail=f"Execution {pp_execution_id} not found")
@@ -273,7 +288,7 @@ async def clean_execution(pp_execution_id: int):
 
 @app.delete('/executions/{prioritization_process_id}')
 async def clean_executions(prioritization_process_id: int):
-    delete_result = await db["executions"].delete({"prioritization_process_id": prioritization_process_id})
+    delete_result = await db_client["api"]["executions"].delete({"prioritization_process_id": prioritization_process_id})
     if delete_result.deleted_count != 0:
         return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
     raise HTTPException(status_code=404, detail=f"Executions from process {prioritization_process_id} not found")
@@ -345,7 +360,9 @@ def algorithmsnrp():
 # Obtain unfinished executions
 async def retrieve_executions():
     executions = []
-    async for execution in stream.enumerate(execution_collection.find()):
+    execution_collection = db_client["api"].get_collection("executions")
+    cursor = execution_collection.find()
+    async for execution in cursor:
         if len(execution["solution"]) == 0:
             executions.append(execution)
     return executions
