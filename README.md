@@ -1,30 +1,14 @@
-# dss-pnrp-api
+# Decision Suport System
 
-API de plugin de problema priorizacion y problema de proximo requerimientos.
+##  Priorization Problem - Next Release Problem 
 
-## Herramientas necesarias
+API desarrollada utilizando el framework [Fast API](https://fastapi.tiangolo.com/)
+que se encarga de realizar los calculos correspondientes al **problema de
+priorizacion de requerimientos**  y al **problema del proximo lanzamiento** de un
+proyecto de software.
+Para contribuir en el desarrollo de este proyecto verificar el archivo
+[CONTRIBUTING.md](CONTRIBUTING.md)
 
-* [Docker](https://docs.docker.com/engine/install/ubuntu/)
-* [Docker-Compose](https://docs.docker.com/compose/install/)
-* [Direnv](https://direnv.net/)
+## To do
 
-## Produccion
-
-### Comandos
-Para desplegar localmente la API en modo produccion debemos ejecutar el
-siguiente comando. Es importante que se haya creado previamente la red de
-Redmine.
-
-```bash
-docker-prod up -d
-```
-
-## Desarrollo
-
-### Comandos
-Para desplegar la API en modo desarrollo debemos ejecutar el siguiente comando.
-Previamente deberia estar creada la red Docker que utilizara Redmine.
-
-```bash
-docker-dev up -d
-```
+[] Agregar calculos al problema de proximos lanzamientos.
