@@ -1,6 +1,6 @@
-# Decision Suport System
+# Decision Support System | API
 
-##  Priorization Problem - Next Release Problem 
+##  Prioritization Problem - Next Release Problem
 
 API desarrollada utilizando el framework [Fast API](https://fastapi.tiangolo.com/)
 que se encarga de realizar los calculos correspondientes al **problema de
@@ -11,4 +11,4 @@ Para contribuir en el desarrollo de este proyecto verificar el archivo
 
 ## To do
 
-[] Agregar calculos al problema de proximos lanzamientos.
+* [] Agregar calculos al problema de proximos lanzamientos.
