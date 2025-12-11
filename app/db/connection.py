@@ -22,7 +22,7 @@ async def close_db() -> None:
         print("🔌 MongoDB connection closed")
 
 
-async def get_db_client()
+async def get_db_client():
     global db_client
     if db_client is None:
         raise RuntimeError("Database client is not initialized. Did you call connect_db()?")

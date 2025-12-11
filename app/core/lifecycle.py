@@ -12,7 +12,7 @@ def register_lifecycle_events(app: FastAPI):
       # Solve unfinished executions
       pending_executions = await retrieve_executions()
       for execution in pending_executions:
-          solve_execution(execution)
+          await solve_execution(execution)
     
     @app.on_event("shutdown")
     async def shutdown_event():

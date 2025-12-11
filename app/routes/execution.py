@@ -4,7 +4,7 @@ from fastapi.encoders import jsonable_encoder
 
 from app.db.connection import get_db_client
 from app.models.execution import PPExecutionCreateModel
-from app.algorithms.prioritization import solve_execution 
+from app.algorithms.prioritization import solve_execution
 
 router = APIRouter(prefix="/execution", tags=["execution"])
 
@@ -18,7 +18,7 @@ async def create_execution(
     background_tasks: BackgroundTasks,
 ):
 
-    client = get_db_client()
+    client = await get_db_client()
     execution_data = jsonable_encoder(execution)
 
     # -----------------------------
@@ -73,7 +73,7 @@ async def create_execution(
 async def get_execution(
     pp_execution_id: int,
 ):
-    client = get_db_client()
+    client = await get_db_client()
     
     execution = await client["api"]["executions"].find_one(
         {"pp_execution_id": pp_execution_id},
@@ -93,7 +93,7 @@ async def get_execution(
 async def get_executions(
     prioritization_process_id: int,
 ):
-    client = get_db_client()
+    client = await get_db_client()
     executions = await client["api"]["executions"].find_one(
         {"prioritization_process_id": prioritization_process_id},
         {"_id": 0}
@@ -112,7 +112,7 @@ async def get_executions(
 async def delete_execution(
     pp_execution_id: int,
 ):
-    client = get_db_client()
+    client = await get_db_client()
     result = await client["api"]["executions"].delete_one(
         {"pp_execution_id": pp_execution_id}
     )
@@ -130,7 +130,7 @@ async def delete_execution(
 async def delete_executions(
     prioritization_process_id: int,
 ):
-    client = get_db_client()
+    client = await get_db_client()
     result = await client["api"]["executions"].delete_many(
         {"prioritization_process_id": prioritization_process_id}
     )

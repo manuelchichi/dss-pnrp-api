@@ -3,7 +3,7 @@ from .connection import get_db_client
 
 async def retrieve_executions():
     executions = []
-    client = get_db_client()
+    client = await get_db_client()
     execution_collection = client["api"]["executions"]
     cursor = execution_collection.find()
 
