@@ -6,7 +6,6 @@ desarrollo del proyecto.
 ## Herramientas necesarias
 
 * [Docker](https://docs.docker.com/engine/install/ubuntu/)
-* [Docker-Compose](https://docs.docker.com/compose/install/)
 * [Mise](https://mise.jdx.dev/installing-mise.html/)
 
 ## Produccion
