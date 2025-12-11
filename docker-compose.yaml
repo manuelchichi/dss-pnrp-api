@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   fastapi:
     ports:
@@ -9,14 +7,11 @@ services:
       - default
       - redmine
     environment:
-      - MONGODB_URL=mongodb://api_user:password123@mongo/api?retryWrites=true&w=majority
+      - MONGODB_URL=mongodb://mongo/api?retryWrites=true&w=majority
   mongo:
-    image: "bitnami/mongodb:4.2" 
+    image: "mongo:8.2" 
     environment:
-      - MONGODB_USERNAME=api_user
-      - MONGODB_PASSWORD=password123
-      - MONGODB_DATABASE=api
-      - ALLOW_EMPTY_PASSWORD=yes
+      - MONGO_INITDB_DATABASE=api
     volumes:
       - mongo-data:/bitnami/mongodb
     restart: on-failure
