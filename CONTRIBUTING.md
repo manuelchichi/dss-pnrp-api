@@ -7,7 +7,7 @@ desarrollo del proyecto.
 
 * [Docker](https://docs.docker.com/engine/install/ubuntu/)
 * [Docker-Compose](https://docs.docker.com/compose/install/)
-* [Direnv](https://direnv.net/)
+* [Mise](https://mise.jdx.dev/installing-mise.html/)
 
 ## Produccion
 
